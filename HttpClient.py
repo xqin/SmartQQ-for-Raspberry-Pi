@@ -1,4 +1,4 @@
-import cookielib, urllib, urllib2
+import cookielib, urllib, urllib2, socket
 
 class HttpClient:
   __cookie = cookielib.CookieJar()
@@ -14,18 +14,22 @@ class HttpClient:
       req = urllib2.Request(url)
       if not (refer is None):
         req.add_header('Referer', refer)
-      return urllib2.urlopen(req).read()
+      return urllib2.urlopen(req, timeout=120).read()
     except urllib2.HTTPError, e:
       return e.read()
+    except socket.timeout, e:
+      return ''
 
   def Post(self, url, data, refer=None):
     try:
       req = urllib2.Request(url, urllib.urlencode(data))
       if not (refer is None):
         req.add_header('Referer', refer)
-      return urllib2.urlopen(req).read()
+      return urllib2.urlopen(req, timeout=120).read()
     except urllib2.HTTPError, e:
       return e.read()
+    except socket.timeout, e:
+      return ''
 
   def Download(self, url, file):
     output = open(file, 'wb')
