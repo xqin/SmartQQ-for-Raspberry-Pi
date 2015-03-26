@@ -15,7 +15,7 @@ class WebQQ(HttpClient):
   def __init__(self, vpath, qq=0):
     self.VPath = vpath#QRCode保存路径
     self.AdminQQ = int(qq)
-    logging.basicConfig(filename='qq.log', level=logging.DEBUG, format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+    logging.basicConfig(filename='qq.log', level=logging.DEBUG, format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='[%Y-%m-%d %H:%M:%S]')
     self.initUrl = self.getReValue(self.Get(self.SmartQQUrl), r'\.src = "(.+?)"', 'Get Login Url Error.', 1)
 
     html = self.Get(self.initUrl + '0')
@@ -92,6 +92,10 @@ class WebQQ(HttpClient):
           'r' : '{{"ptwebqq":"{1}","clientid":{2},"psessionid":"{0}","key":""}}'.format(self.PSessionID, self.PTWebQQ, self.ClientID)
         }, self.Referer)
 
+        #超时时会返回空, 所以此处如果是空, 则继续发出请求, 不用往后走下去
+        if html == '':
+          continue
+
         logging.info(html)
 
         try:
@@ -146,10 +150,20 @@ class WebQQ(HttpClient):
               if txt[0:4] == 'exit':
                 logging.info(self.Get('http://d.web2.qq.com/channel/logout2?ids=&clientid={0}&psessionid={1}'.format(self.ClientID, self.PSessionID), self.Referer))
                 exit(0)
+            elif msgType == 'sess_message':#QQ临时会话的消息
+              logging.debug(msg['value']['content'][1])
+            elif msgType == 'group_message':#群消息
+              txt = msg['value']['content'][1]
+              logging.debug("QQGroup Message:" + txt)
+            elif msgType == 'discu_message':#讨论组的消息
+              txt = msg['value']['content'][1]
+              logging.debug("Discu Message:" + txt)
             elif msgType == 'kick_message':#QQ号在另一个地方登陆,被挤下线
               logging.error(msg['value']['reason'])
               raise Exception, msg['value']['reason']#抛出异常,重新启动WebQQ,需重新扫描QRCode来完成登陆
               break
+            elif msgType != 'input_notify':
+              logging.debug(msg)
 
   def runCommand(self, fuin, cmd, msgId):
     ret = 'Run Command: [{0}]\n'.format(cmd)
