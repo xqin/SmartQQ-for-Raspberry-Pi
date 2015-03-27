@@ -100,6 +100,7 @@ class WebQQ(HttpClient):
 
         try:
           ret = json.loads(html)
+          E = 0
         except ValueError as e:
           logging.debug(e)
           E += 1
@@ -107,15 +108,13 @@ class WebQQ(HttpClient):
           logging.debug(e)
           E += 1
 
-        if E > 0 and E < 3:
+        if E > 0 and E < 5:
           time.sleep(2)
           continue
 
         if E > 0:
           logging.debug('try auto login ...')
           break
-
-        E = 0
 
         if ret['retcode'] == 100006:
           break
