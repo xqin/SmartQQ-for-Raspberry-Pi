@@ -22,7 +22,7 @@ class WebQQ(HttpClient):
 
     self.APPID = self.getReValue(html, r'var g_appid =encodeURIComponent\("(\d+)"\);', 'Get AppId Error', 1)
 
-    sign = self.getReValue(html, r'var g_login_sig=encodeURIComponent\("(.+?)"\);', 'Get Login Sign Error', 1)
+    sign = self.getReValue(html, r'var g_login_sig=encodeURIComponent\("(.*?)"\);', 'Get Login Sign Error', 1)
     logging.info('get sign : %s', sign)
 
     JsVer = self.getReValue(html, r'var g_pt_version=encodeURIComponent\("(\d+)"\);', 'Get g_pt_version Error', 1)
