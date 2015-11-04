@@ -18,17 +18,17 @@ class WebQQ(HttpClient):
     logging.basicConfig(filename='qq.log', level=logging.DEBUG, format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='[%Y-%m-%d %H:%M:%S]')
     self.initUrl = self.getReValue(self.Get(self.SmartQQUrl), r'\.src = "(.+?)"', 'Get Login Url Error.', 1)
 
-    html = self.Get(self.initUrl + '0')
+    html = self.Get(self.initUrl + '0', self.SmartQQUrl)
 
-    self.APPID = self.getReValue(html, r'var g_appid =encodeURIComponent\("(\d+)"\);', 'Get AppId Error', 1)
+    self.APPID = self.getReValue(html, r'g_appid=encodeURIComponent\("(\d+)"\)', 'Get AppId Error', 1)
 
-    sign = self.getReValue(html, r'var g_login_sig=encodeURIComponent\("(.*?)"\);', 'Get Login Sign Error', 1)
+    sign = self.getReValue(html, r'g_login_sig=encodeURIComponent\("(.*?)"\)', 'Get Login Sign Error', 1)
     logging.info('get sign : %s', sign)
 
-    JsVer = self.getReValue(html, r'var g_pt_version=encodeURIComponent\("(\d+)"\);', 'Get g_pt_version Error', 1)
+    JsVer = self.getReValue(html, r'g_pt_version=encodeURIComponent\("(\d+)"\)', 'Get g_pt_version Error', 1)
     logging.info('get g_pt_version : %s', JsVer)
 
-    MiBaoCss = self.getReValue(html, r'var g_mibao_css=encodeURIComponent\("(.+?)"\);', 'Get g_mibao_css Error', 1)
+    MiBaoCss = self.getReValue(html, r'g_mibao_css=encodeURIComponent\("(.+?)"\)', 'Get g_mibao_css Error', 1)
     logging.info('get g_mibao_css : %s', sign)
 
     StarTime = self.date_to_millis(datetime.datetime.utcnow())
@@ -40,7 +40,7 @@ class WebQQ(HttpClient):
       logging.info('[{0}] Get QRCode Picture Success.'.format(T))
       while True:
         html = self.Get('https://ssl.ptlogin2.qq.com/ptqrlogin?webqq_type=10&remember_uin=1&login2qq=1&aid={0}&u1=http%3A%2F%2Fw.qq.com%2Fproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=0-0-{1}&mibao_css={2}&t=undefined&g=1&js_type=0&js_ver={3}&login_sig={4}'.format(self.APPID, self.date_to_millis(datetime.datetime.utcnow()) - StarTime, MiBaoCss, JsVer, sign), self.initUrl)
-        #logging.info(html)
+        logging.info(html)
         ret = html.split("'")
         if ret[1] == '65' or ret[1] == '0':#65: QRCode 失效, 0: 验证成功, 66: 未失效, 67: 验证中
           break
