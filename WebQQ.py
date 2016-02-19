@@ -4,42 +4,36 @@ from HttpClient import HttpClient
 import re, random, md5, json, os, sys, datetime, time, thread, subprocess, logging
 
 class WebQQ(HttpClient):
-  ClientID = int(random.uniform(111111, 888888))
+  ClientID = 53999199
   APPID = 0
   FriendList = {}
   MaxTryTime = 5
   PSessionID = ''
-  Referer = 'http://d.web2.qq.com/proxy.html?v=20130916001&callback=1&id=2'
-  SmartQQUrl = 'http://w.qq.com/login.html'
+  Referer = 'http://d1.web2.qq.com/proxy.html?v=20151105001&callback=1&id=2'
+  SmartQQUrl = 'http://w.qq.com/'
 
   def __init__(self, vpath, qq=0):
     self.VPath = vpath#QRCode保存路径
     self.AdminQQ = int(qq)
     logging.basicConfig(filename='qq.log', level=logging.DEBUG, format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='[%Y-%m-%d %H:%M:%S]')
-    self.initUrl = self.getReValue(self.Get(self.SmartQQUrl), r'\.src = "(.+?)"', 'Get Login Url Error.', 1)
 
-    html = self.Get(self.initUrl + '0', self.SmartQQUrl)
+    self.initUrl = "https://ui.ptlogin2.qq.com/cgi-bin/login?daid=164&target=self&style=16&mibao_css=m_webqq&appid=501004106&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fw.qq.com%2Fproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20131024001"
 
-    self.APPID = self.getReValue(html, r'g_appid=encodeURIComponent\("(\d+)"\)', 'Get AppId Error', 1)
+    html = self.Get(self.initUrl, self.SmartQQUrl)
 
-    sign = self.getReValue(html, r'g_login_sig=encodeURIComponent\("(.*?)"\)', 'Get Login Sign Error', 1)
-    logging.info('get sign : %s', sign)
-
-    JsVer = self.getReValue(html, r'g_pt_version=encodeURIComponent\("(\d+)"\)', 'Get g_pt_version Error', 1)
-    logging.info('get g_pt_version : %s', JsVer)
-
-    MiBaoCss = self.getReValue(html, r'g_mibao_css=encodeURIComponent\("(.+?)"\)', 'Get g_mibao_css Error', 1)
-    logging.info('get g_mibao_css : %s', sign)
+    self.APPID = 501004106
+    MiBaoCss = "m_webqq"
+    JsVer = 10149
 
     StarTime = self.date_to_millis(datetime.datetime.utcnow())
 
     T = 0
     while True:
       T = T + 1
-      self.Download('https://ssl.ptlogin2.qq.com/ptqrshow?appid={0}&e=0&l=L&s=8&d=72&v=4'.format(self.APPID), self.VPath)
+      self.Download('https://ssl.ptlogin2.qq.com/ptqrshow?appid={0}&e=0&l=M&s=5&d=72&v=4&t=0.5462884965818375'.format(self.APPID), self.VPath)
       logging.info('[{0}] Get QRCode Picture Success.'.format(T))
       while True:
-        html = self.Get('https://ssl.ptlogin2.qq.com/ptqrlogin?webqq_type=10&remember_uin=1&login2qq=1&aid={0}&u1=http%3A%2F%2Fw.qq.com%2Fproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=0-0-{1}&mibao_css={2}&t=undefined&g=1&js_type=0&js_ver={3}&login_sig={4}'.format(self.APPID, self.date_to_millis(datetime.datetime.utcnow()) - StarTime, MiBaoCss, JsVer, sign), self.initUrl)
+        html = self.Get('https://ssl.ptlogin2.qq.com/ptqrlogin?webqq_type=10&remember_uin=1&login2qq=1&aid={0}&u1=http%3A%2F%2Fw.qq.com%2Fproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=0-0-{1}&mibao_css={2}&t=undefined&g=1&js_type=0&js_ver={3}&login_sig=&pt_randsalt=0'.format(self.APPID, self.date_to_millis(datetime.datetime.utcnow()) - StarTime, MiBaoCss, JsVer), self.initUrl)
         logging.info(html)
         ret = html.split("'")
         if ret[1] == '65' or ret[1] == '0':#65: QRCode 失效, 0: 验证成功, 66: 未失效, 67: 验证中
@@ -68,11 +62,10 @@ class WebQQ(HttpClient):
 
     logging.info('PTWebQQ: {0}'.format(self.PTWebQQ))
 
-    while 1:
-      html = self.Post('http://d.web2.qq.com/channel/login2', {
-        'r' : '{{"ptwebqq":"{0}","clientid":{1},"psessionid":"{2}","status":"online"}}'.format(self.PTWebQQ, self.ClientID, self.PSessionID)
-      }, self.Referer)
+    #self.Get('http://s.web2.qq.com/proxy.html?v=20130916001&callback=1&id=1')
 
+    while 1:
+      html = self.Get('http://s.web2.qq.com/api/getvfwebqq?ptwebqq={0}&clientid={1}&psessionid=&t={2}'.format(self.PTWebQQ, self.ClientID, StarTime), self.Referer)
       logging.debug(html)
       ret = json.loads(html)
 
@@ -80,15 +73,28 @@ class WebQQ(HttpClient):
         break
 
       self.VFWebQQ = ret['result']['vfwebqq']
+
+      #self.Get('http://d1.web2.qq.com/proxy.html?v=20151105001&callback=1&id=2', self.SmartQQUrl)
+
+      html = self.Post('http://d1.web2.qq.com/channel/login2', {
+        'r' : '{{"ptwebqq":"{0}","clientid":{1},"psessionid":"","status":"online"}}'.format(self.PTWebQQ, self.ClientID)
+      }, 'http://d1.web2.qq.com/proxy.html?v=20151105001&callback=1&id=2')
+
+      logging.debug(html)
+      ret = json.loads(html)
+
+      if ret['retcode'] != 0:
+        break
+
       self.PSessionID = ret['result']['psessionid']
 
       logging.info('Login success')
 
-      msgId = int(random.uniform(20000, 50000))
+      msgId = int(random.uniform(1000, 3456)) * 10000 + 1
 
       E = 0
       while 1:
-        html = self.Post('http://d.web2.qq.com/channel/poll2', {
+        html = self.Post('http://d1.web2.qq.com/channel/poll2', {
           'r' : '{{"ptwebqq":"{1}","clientid":{2},"psessionid":"{0}","key":""}}'.format(self.PSessionID, self.PTWebQQ, self.ClientID)
         }, self.Referer)
 
@@ -123,7 +129,7 @@ class WebQQ(HttpClient):
         if ret['retcode'] == 116:#更新PTWebQQ值
           self.PTWebQQ = ret['p']
           continue
-        if ret['retcode'] == 0:
+        if ret['retcode'] == 0 and ret.get('result'):
           for msg in ret['result']:
             msgType = msg['poll_type']
             if msgType == 'message':#QQ消息
@@ -147,7 +153,6 @@ class WebQQ(HttpClient):
                   thread.start_new_thread(self.runCommand, (tuin, txt[1:].strip(), msgId))
                   msgId += 1
               if txt[0:4] == 'exit':
-                logging.info(self.Get('http://d.web2.qq.com/channel/logout2?ids=&clientid={0}&psessionid={1}'.format(self.ClientID, self.PSessionID), self.Referer))
                 exit(0)
             elif msgType == 'sess_message':#QQ临时会话的消息
               logging.debug(msg['value']['content'][1])
@@ -165,7 +170,7 @@ class WebQQ(HttpClient):
               logging.debug(msg)
 
   def runCommand(self, fuin, cmd, msgId):
-    ret = 'Run Command: [{0}]\n'.format(cmd)
+    ret = ''
     try:
       popen_obj = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
       (stdout, stderr) = popen_obj.communicate()
@@ -175,15 +180,14 @@ class WebQQ(HttpClient):
     except Exception, e:
       ret += e
 
+    ret = ret.strip().replace('\\', '\\\\').replace('\t', '\\\\t').replace('\r', '\\\\r').replace('\n', '\\\\n')
+    ret = ret.replace('"', '\\\\\\"')
+
     logging.info(ret)
 
-    ret = ret.replace('\\', '\\\\\\\\').replace('\t', '\\\\t').replace('\r', '\\\\r').replace('\n', '\\\\n')
-    ret = ret.replace('"', '\\\\\\"')
-    self.Post("http://d.web2.qq.com/channel/send_buddy_msg2", (
-      ('r', '{{"to":{0},"face":567,"content":"[\\"{4}\\",[\\"font\\",{{\\"name\\":\\"Arial\\",\\"size\\":\\"10\\",\\"style\\":[0,0,0],\\"color\\":\\"000000\\"}}]]","msg_id":{1},"clientid":"{2}","psessionid":"{3}"}}'.format(fuin, msgId, self.ClientID, self.PSessionID, ret)),
-      ('clientid', self.ClientID),
-      ('psessionid', self.PSessionID)
-    ), self.Referer)
+    self.Post("http://d1.web2.qq.com/channel/send_buddy_msg2", {
+      'r' : '{{"to":{0},"content":"[\\"{4}\\",[\\"font\\",{{\\"name\\":\\"宋体\\",\\"size\\":10,\\"style\\":[0,0,0],\\"color\\":\\"000000\\"}}]]","face":570,"clientid":{2},"msg_id":{1},"psessionid":"{3}"}}'.format(fuin, msgId, self.ClientID, self.PSessionID, ret)
+    }, self.Referer)
 
   def getReValue(self, html, rex, er, ex):
     v = re.search(rex, html)
